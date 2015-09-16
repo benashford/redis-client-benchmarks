@@ -28,12 +28,10 @@ public class JRespPerformance {
                 long startTime = System.currentTimeMillis();
                 CountDownLatch latch = new CountDownLatch(N);
                 for (int i = 0; i < N; i++) {
-                    List<RespType> elements = new ArrayList<>(3);
-                    elements.add(new BulkStr("SET"));
-                    elements.add(new BulkStr("foo"));
-                    elements.add(new BulkStr("bar"));
-
-                    con.write(new Ary(elements), resp -> latch.countDown());
+                    con.write(new Ary(BulkStr.get("SET"),
+                                      new BulkStr("foo"),
+                                      new BulkStr("bar")),
+                              resp -> latch.countDown());
                 }
                 latch.await();
                 long endTime = System.currentTimeMillis();
