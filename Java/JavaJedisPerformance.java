@@ -10,7 +10,19 @@ import java.util.List;
 public class JavaJedisPerformance {
     public static final int N = 1000000;
 
-    public static void main(String[] args) {
+    private static void notPipelined() {
+        Jedis jedis = new Jedis("localhost");
+        for (int j = 0; j < 5; j++) {
+            long startTime = System.currentTimeMillis();
+            for(int i= 0; i < N; i++) {
+                jedis.set("foo", "bar");
+            }
+            long endTime = System.currentTimeMillis();
+            System.out.println("Total execution time: " + (endTime-startTime) + "ms");
+        }
+    }
+
+    private static void allPipelined() {
         Jedis jedis = new Jedis("localhost");
         for (int j = 0; j < 10; j++) {
             long startTime = System.currentTimeMillis();
@@ -22,5 +34,30 @@ public class JavaJedisPerformance {
             long endTime = System.currentTimeMillis();
             System.out.println("Total execution time: " + (endTime-startTime) + "ms");
         }
+    }
+
+    private static void partPipelined() {
+        Jedis jedis = new Jedis("localhost");
+        for (int j = 0; j < 10; j++) {
+            long startTime = System.currentTimeMillis();
+            Pipeline p = jedis.pipelined();
+            for(int i= 0; i < N; i += 1000) {
+                for (int x = 0; x < 1000; x++) {
+                    p.set("foo", "bar");
+                }
+                p.syncAndReturnAll();
+            }
+            long endTime = System.currentTimeMillis();
+            System.out.println("Total execution time: " + (endTime-startTime) + "ms");
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println("Not pipelined:");
+        notPipelined();
+        System.out.println("All pipelined:");
+        allPipelined();
+        System.out.println("Part pipelined:");
+        partPipelined();
     }
 }
